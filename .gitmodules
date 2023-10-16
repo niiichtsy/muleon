@@ -1,0 +1,3 @@
+[submodule "ip/clk_divider"]
+	path = ip/clk_divider
+	url = https://github.com/niiichtsy/verilog_misc_modules.git
