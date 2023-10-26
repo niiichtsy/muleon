@@ -7,4 +7,4 @@ To build the IP library, run:
 ```
 make lib
 ```
-muleon uses IPs from another one of my projects (though its IP library is entirely self-sufficient - you don't need any other repository to build the project). Check out [verilog_misc_modules](https://github.com/niiichtsy/verilog_misc_modules.git)!
+muleon uses IPs from another one of my projects (though its IP library is entirely self-sufficient - you don't need any other repository to build the project). Check out [hardwell](https://github.com/niiichtsy/hardwell.git)!
