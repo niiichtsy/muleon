@@ -7,6 +7,7 @@ module adau1761_spi_configurator (
     input [15:0] write_value,
     input write,
     input read,
+    input init,
     input sdi,
     input clk,
     input resetn
@@ -37,7 +38,7 @@ module adau1761_spi_configurator (
       init_counter <= 'h00;
       spi_counter <= 'h00;
       transaction_done <= 1'b0;
-      state <= INIT;
+      state <= INIT;  // By default, go straight to init stage
     end else begin
 
       case (state)
@@ -45,6 +46,8 @@ module adau1761_spi_configurator (
         IDLE: begin
           if (write) state <= WRITE;
           if (read) state <= READ;
+          if (init) state <= INIT;
+          transaction_done <= 1'b0;
         end
 
         // In order to put the ADAU1761 in SPI mode, make 3 dummy writes
