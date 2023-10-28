@@ -2,6 +2,11 @@ module adau1761_spi_configurator (
     output wire sclk,
     output reg sdo,
     output reg cs,
+    output reg [39:0] read_value,
+    input [15:0] address,
+    input [15:0] write_value,
+    input write,
+    input read,
     input sdi,
     input clk,
     input resetn
@@ -10,15 +15,16 @@ module adau1761_spi_configurator (
   // States
   localparam IDLE = 0;
   localparam INIT = 1;
-  localparam REPEAT = 2;
-  localparam READ = 3;
-  localparam WRITE = 4;
+  localparam READ = 2;
+  localparam WRITE = 3;
 
   //Regs
-  reg [23:0] sdo_reg;
-  reg [ 7:0] spi_counter;
-  reg [ 1:0] init_counter;
-  reg [ 3:0] state;
+  reg [39:0] sdo_reg;
+  reg sdi_reg;
+  reg [7:0] spi_counter;
+  reg [1:0] init_counter;
+  reg [3:0] state;
+  reg transaction_done;
 
   // Wire assignments
   assign sclk = clk;
@@ -30,36 +36,43 @@ module adau1761_spi_configurator (
       cs <= 'b1;
       init_counter <= 'h00;
       spi_counter <= 'h00;
+      transaction_done <= 1'b0;
       state <= INIT;
     end else begin
 
       case (state)
 
         IDLE: begin
+          if (write) state <= WRITE;
+          if (read) state <= READ;
         end
 
         // In order to put the ADAU1761 in SPI mode, make 3 dummy writes
         INIT: begin
-          cs <= 1'b0;
-          spi_counter <= spi_counter + 1'b1;
-        end
-
-        REPEAT: begin
-          if (init_counter == 2'b10) begin
-            state <= WRITE;
-            init_counter <= 2'b00;
+          if (transaction_done) begin
+            transaction_done <= 1'b0;
+            if (init_counter == 2'b10) begin
+              state <= IDLE;
+              init_counter <= 2'b00;
+              cs <= 1'b1;
+            end else begin
+              state <= INIT;
+              init_counter <= init_counter + 1;
+              cs <= 1'b0;
+            end
           end else begin
             state <= INIT;
-            init_counter <= init_counter + 1;
+            spi_counter <= spi_counter + 1'b1;
+            cs <= 1'b0;
           end
         end
 
-        // Enable core clock
+        // Write operation
         WRITE: begin
           cs <= 1'b0;
           spi_counter <= spi_counter + 1'b1;
           if (spi_counter == 8'h00) begin
-            sdo_reg <= {8'h00, 8'h40, 8'h00, 8'h07};  // Write a 0x1 to register 0x4000 to enable core clock
+            sdo_reg <= {8'h00, address, write_value};  // Write a 0x1 to register 0x4000 to enable core clock
             sdo <= 1'b0;  // NOTE: This bit is ignored - sdo coincidental with the cs falling edge is not read
           end else begin
             sdo_reg <= sdo_reg << 1;
@@ -72,21 +85,25 @@ module adau1761_spi_configurator (
           cs <= 1'b0;
           spi_counter <= spi_counter + 1'b1;
           if (spi_counter == 8'h00) begin
-            sdo_reg <= {8'h01, 8'h40, 8'h02};
+            sdo_reg <= {8'h01, address, 16'h00};
             sdo <= 1'b0;  // NOTE: This bit is ignored - sdo coincidental with the cs falling edge is not read
           end else begin
             sdo_reg <= sdo_reg << 1;
             sdo <= sdo_reg[23];  // MSB first
+            if (spi_counter >= 'd24) begin
+              read_value[0] <= sdi;
+              read_value <= read_value << 1;
+            end
           end
         end
 
       endcase
 
-      if (spi_counter == 8'h20) begin
+      if (spi_counter == 8'h28) begin
         cs <= 1'b1;
         spi_counter <= 8'h00;
+        transaction_done <= 1'b1;
         case (state)
-          INIT:  state <= REPEAT;
           READ:  state <= IDLE;
           WRITE: state <= IDLE;
         endcase
