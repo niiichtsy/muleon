@@ -5,6 +5,7 @@ set proj_name $env(VIVADO_PROJ_NAME)
 set rev None
 
 # Sources
+set srcRoot [file normalize [pwd]/src]
 set hdlRoot [file normalize [pwd]/hdl]
 set xdcRoot [file normalize [pwd]/xdc]
 set ipRoot [file normalize [pwd]/ip]
@@ -20,9 +21,8 @@ set productsDir [file normalize [pwd]/products]
 set_param general.maxThreads 8
 set jobs [get_param general.maxThreads]
 
-# User defined HDL list
-set hdl_list {./src/distortion.v
-}
+# List of source files
+set hdl_list [glob $srcRoot/*]
 
 create_project -force $proj_name -dir $outputDir
 
