@@ -1,5 +1,5 @@
 module distortion #(
-    parameter DATA_WIDTH = 24
+    parameter DATA_WIDTH = 10
 ) (
     input [DATA_WIDTH-1:0] i2s_data_in,
     output reg [DATA_WIDTH-1:0] i2s_data_out,
@@ -22,17 +22,23 @@ module distortion #(
 
       // This is for testing
 
-      if (i2s_data_in < 'd3355443) begin
-        i2s_data_out <= 'd3355443;
-      end else if (i2s_data_in > 'd13421772) begin
-        i2s_data_out <= 'd13421772;
+      if (i2s_data_in < 'd205) begin
+        i2s_data_out <= 'd205;
+      end else if (i2s_data_in > 'd819) begin
+        i2s_data_out <= 'd819;
       end else begin
         i2s_data_out <= i2s_data_in;
       end
 
     end
 
-
   end
+
+
+  initial begin
+    $dumpvars(0, distortion);
+    $dumpfile("dump.vcd");
+  end
+
 
 endmodule
