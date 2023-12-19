@@ -73,4 +73,9 @@ module fir_lowpass #(
     end
   end
 
+  initial begin
+    $dumpvars(0, fir_lowpass);
+    $dumpfile("fir_lowpass.vcd");
+  end
+
 endmodule
