@@ -1,5 +1,5 @@
 module distortion #(
-    parameter DATA_WIDTH = 10
+    parameter DATA_WIDTH = 16
 ) (
     input [DATA_WIDTH-1:0] i2s_data_in,
     output reg [DATA_WIDTH-1:0] i2s_data_out,
@@ -22,10 +22,10 @@ module distortion #(
 
       // This is for testing
 
-      if (i2s_data_in < 'd205) begin
-        i2s_data_out <= 'd205;
-      end else if (i2s_data_in > 'd819) begin
-        i2s_data_out <= 'd819;
+      if (i2s_data_in < 'd6554) begin
+        i2s_data_out <= 'd6554;
+      end else if (i2s_data_in > 'd26214) begin
+        i2s_data_out <= 'd26214;
       end else begin
         i2s_data_out <= i2s_data_in;
       end
