@@ -13,7 +13,7 @@ from cocotb.clock import Clock
 # Definitions
 CLK_PERIOD_NS = 10
 TEST_DURATION = 100
-CYCLES = 5
+CYCLES = 1
 
 
 async def setup_clocks(dut):
@@ -36,12 +36,12 @@ def scale_number(unscaled, to_min, to_max, from_min, from_max):
     return round(val)
 
 
-def generate_sine_table(dut, length=1024, maxVal=1023, minVal=0):
+def generate_sine_table(frequency, length=1024, maxVal=1023, minVal=0):
     raw_table = []
 
     for i in range(0, CYCLES):
         for index, item in enumerate(
-            (math.sin(2 * math.pi * i / length) for i in range(length))
+            (math.sin(frequency * 2 * math.pi * i / length) for i in range(length))
         ):
             raw_table.append(int(scale_number(item, minVal, maxVal, -1, 1)))
 
@@ -49,12 +49,17 @@ def generate_sine_table(dut, length=1024, maxVal=1023, minVal=0):
 
 
 @cocotb.test()
-async def distortion_test(dut):
+async def fir_lowpass_test(dut):
     await setup_clocks(dut)
     await RisingEdge(dut.clk)
     await reset_dut(dut)
 
-    sine = generate_sine_table(dut, 1024, 1023, 0)
+    sine_slowest = generate_sine_table(1, 1024, 32767, -32768)
+    sine_slow = generate_sine_table(10, 1024, 32767, -32768)
+    sine_fast = generate_sine_table(100, 1024, 32767, -32768)
+    sine_fastest = generate_sine_table(1000, 1024, 32767, -32768)
+
+    sine = sine_slowest + sine_slow + sine_fast + sine_fastest
 
     for sineval in sine:
         dut.i2s_data_in.value = sineval
@@ -63,14 +68,14 @@ async def distortion_test(dut):
     assert dut.resetn.value == 1
 
 
-def distortion_test_runner():
+def fir_lowpass_test_runner():
     sim = os.getenv("SIM", "icarus")
 
     proj_path = Path(__file__).resolve().parent.parent
     # equivalent to setting the PYTHONPATH environment variable
     sys.path.append(str(proj_path / "model"))
 
-    verilog_sources = [proj_path / "src" / "distortion.v"]
+    verilog_sources = [proj_path / "src" / "fir_lowpass.v"]
 
     # equivalent to setting the PYTHONPATH environment variable
     sys.path.append(str(proj_path / "tests"))
@@ -78,14 +83,14 @@ def distortion_test_runner():
     runner = get_runner(sim)
     runner.build(
         verilog_sources=verilog_sources,
-        hdl_toplevel="distortion",
+        hdl_toplevel="fir_lowpass",
         always=True,
     )
     runner.test(
-        hdl_toplevel="distortion",
-        test_module="distortion_test",
+        hdl_toplevel="fir_lowpass",
+        test_module="fir_lowpass_test",
     )
 
 
 if __name__ == "__main__":
-    distortion_test_runner()
+    fir_lowpass_test_runner()
