@@ -26,11 +26,9 @@ module adau1761_spi_configurator (
   reg [3:0] state;
   reg transaction_done;
 
-  // Wire assignments
   assign sclk = clk;
 
-
-  always @(negedge clk) begin
+  always @(posedge clk) begin
     if (!resetn) begin
       sdo <= 'h00;
       sdo_reg <= 32'h00;
@@ -90,7 +88,7 @@ module adau1761_spi_configurator (
           spi_counter <= spi_counter + 1'b1;
           sdo <= sdo_reg[31];  // MSB first
           sdo_reg <= sdo_reg << 1;
-          if (spi_counter >= 'd24) begin
+          if (spi_counter >= 'h18) begin
             read_value[0] <= sdi;
             read_value <= read_value << 1;
           end
