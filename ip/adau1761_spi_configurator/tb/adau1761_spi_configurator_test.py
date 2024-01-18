@@ -29,19 +29,14 @@ async def adau1761_spi_configurator_test(dut):
     await setup_clocks(dut)
     await RisingEdge(dut.clk)
     await reset_dut(dut)
-    await Timer(300, units="ns")
 
-    dut.address = 0x4000
+    dut.init = 0x1
     await RisingEdge(dut.clk)
-    dut.write_value = 0x01
-    await RisingEdge(dut.clk)
-    dut.write = 0x1
-    await RisingEdge(dut.clk)
-    await Timer(1, units="ns")
-    dut.write = 0x0
+    await Timer(10, units="ns")
+    dut.init = 0x0
     await RisingEdge(dut.clk)
 
-    await Timer(300, units="ns")
+    await Timer(1000, units="ns")
 
     assert dut.cs.value == 1 or dut.cs.value == 0
 
