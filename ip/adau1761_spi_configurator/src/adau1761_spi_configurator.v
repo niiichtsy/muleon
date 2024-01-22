@@ -85,25 +85,25 @@ module adau1761_spi_configurator (
         INIT_REG: begin
           if (!reg_init_done) begin
             case (reg_sequence)
-              0:  sdo_reg <= {8'h00, 16'h4000, 8'h01};
-              1:  sdo_reg <= {8'h00, 16'h400A, 8'h01};
-              2:  sdo_reg <= {8'h00, 16'h400B, 8'h05};
-              3:  sdo_reg <= {8'h00, 16'h400C, 8'h01};
-              4:  sdo_reg <= {8'h00, 16'h400D, 8'h05};
-              5:  sdo_reg <= {8'h00, 16'h401C, 8'h21};
-              6:  sdo_reg <= {8'h00, 16'h401E, 8'h41};
-              7:  sdo_reg <= {8'h00, 16'h4023, 8'he7};
-              8:  sdo_reg <= {8'h00, 16'h4024, 8'he7};
-              9:  sdo_reg <= {8'h00, 16'h4025, 8'he7};
-              10: sdo_reg <= {8'h00, 16'h4026, 8'he7};
-              11: sdo_reg <= {8'h00, 16'h4019, 8'h03};
-              12: sdo_reg <= {8'h00, 16'h4029, 8'h03};
-              13: sdo_reg <= {8'h00, 16'h402A, 8'h03};
-              14: sdo_reg <= {8'h00, 16'h40F2, 8'h01};
-              15: sdo_reg <= {8'h00, 16'h40F3, 8'h01};
-              16: sdo_reg <= {8'h00, 16'h40F9, 8'h7F};
+              0:  sdo_reg <= {8'h00, 16'h4000, 8'h01};  // R0: Clock Control, enable core clock
+              1:  sdo_reg <= {8'h00, 16'h400A, 8'h5B};  // R4: Record Mixer Left Control 0, enable @ 0dB
+              2:  sdo_reg <= {8'h00, 16'h400B, 8'h0D};  // R5: Record Mixer Left Control 1, enable @ 0dB
+              3:  sdo_reg <= {8'h00, 16'h400C, 8'h5B};  // R6: Record Mixer Left Control 0, enable @ 0dB
+              4:  sdo_reg <= {8'h00, 16'h400D, 8'h0D};  // R7: Record Mixer Left Control 1, enable @ 0dB
+              5:  sdo_reg <= {8'h00, 16'h401C, 8'h2D};  // R22: Playback Mixer Left Control 0, enable @ 0dB
+              6:  sdo_reg <= {8'h00, 16'h401E, 8'h2D};  // R22: Playback Mixer Right Control 0, enable @ 0dB
+              7:  sdo_reg <= {8'h00, 16'h4023, 8'hF7};  // R29: Playback Headphone Left Volume Control @ +6dB
+              8:  sdo_reg <= {8'h00, 16'h4024, 8'hF7};  // R30: Playback Headphone Right Volume Control @ +6dB
+              9:  sdo_reg <= {8'h00, 16'h4025, 8'hF7};  // R31: Playback Line Output Left Volume Control @ +6dB
+              10: sdo_reg <= {8'h00, 16'h4026, 8'hF7};  // R32: Playback Line Output Right Volume Control @ +6dB
+              11: sdo_reg <= {8'h00, 16'h4019, 8'h03};  // R19: ADC Control
+              12: sdo_reg <= {8'h00, 16'h4029, 8'h03};  // R35: Playback Power Management
+              13: sdo_reg <= {8'h00, 16'h402A, 8'h03};  // R2A: DAC Control 0
+              14: sdo_reg <= {8'h00, 16'h40F2, 8'h01};  // R58: Serial Input Route Controlm, rout to ADC
+              15: sdo_reg <= {8'h00, 16'h40F3, 8'h01};  // R59: Serial Output Route Control, route to DAC
+              16: sdo_reg <= {8'h00, 16'h40F9, 8'h7F};  // R65: Clock Enable 0
               17: begin
-                sdo_reg <= {8'h00, 16'h40FA, 8'h03};
+                sdo_reg <= {8'h00, 16'h40FA, 8'h03};  // R66: Clock Enable 1
                 reg_init_done <= 1'b1;
               end
             endcase
