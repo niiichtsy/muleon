@@ -1,4 +1,6 @@
-module adau1761_spi_configurator (
+module adau1761_spi_configurator #(
+    parameter UP_ADDRESS_WIDTH = 16
+) (
     output wire sclk,
     output reg sdo,
     output reg cs,
@@ -9,9 +11,45 @@ module adau1761_spi_configurator (
     input read,
     input init,
     input sdi,
-    input clk,
-    input resetn
+
+    // Slave AXI interface
+    input                               s_axi_aclk,
+    input                               s_axi_aresetn,
+    input                               s_axi_awvalid,
+    input  [  (UP_ADDRESS_WIDTH -1 ):0] s_axi_awaddr,
+    output                              s_axi_awready,
+    input  [                       2:0] s_axi_awprot,
+    input                               s_axi_wvalid,
+    input  [                      31:0] s_axi_wdata,
+    input  [                       3:0] s_axi_wstrb,
+    output                              s_axi_wready,
+    output                              s_axi_bvalid,
+    output [                       1:0] s_axi_bresp,
+    input                               s_axi_bready,
+    input                               s_axi_arvalid,
+    input  [(UP_ADDRESS_WIDTH -1 ) : 0] s_axi_araddr,
+    output                              s_axi_arready,
+    input  [                       2:0] s_axi_arprot,
+    output                              s_axi_rvalid,
+    input                               s_axi_rready,
+    output [                       1:0] s_axi_rresp,
+    output [                      31:0] s_axi_rdata,
+
+    output reg irq,
+    input resetn,
+    input clk
 );
+
+  // Regular AXI interface
+  reg  [                  31:0] up_rdata_s = 'h00;
+  reg                           up_wack_s = 1'b0;
+  reg                           up_rack_s = 1'b0;
+  wire                          up_wreq_s;
+  wire                          up_rreq_s;
+  wire [                  31:0] up_wdata_s;
+  wire [(UP_ADDRESS_WIDTH-3):0] up_waddr_s;
+  wire [(UP_ADDRESS_WIDTH-3):0] up_raddr_s;
+  reg  [                  31:0] up_scratch = 'h0;
 
   // States
   localparam IDLE = 0;
@@ -146,6 +184,69 @@ module adau1761_spi_configurator (
 
     end
   end
+
+  // AXI interface 
+  always @(posedge s_axi_aclk) begin
+    case (up_raddr_s)
+      8'h01:   up_rdata_s <= ID;
+      8'h02:   up_rdata_s <= up_scratch;
+      default: up_rdata_s <= 'h00;
+    endcase
+
+  always @(posedge s_axi_aclk) begin
+    if (!s_axi_aresetn) begin
+      up_wack_s   <= 1'b0;
+      up_scratch  <= 'h00;
+      up_irq_mask <= 'h00;
+    end else begin
+      up_wack_s <= up_wreq_s;
+      if (up_wreq_s) begin
+        case (up_waddr_s)
+          8'h02: up_scratch <= up_wdata_s;
+          8'h42: up_irq_mask <= up_wdata_s[1:0];
+        endcase
+      end
+    end
+  end
+  always @(posedge s_axi_aclk) begin
+    if (s_axi_aresetn == 1'b0) begin
+      up_rack_s <= 'h00;
+    end else begin
+      up_rack_s <= up_rreq_s;
+    end
+  end
+
+  up_axi #(
+      .AXI_ADDRESS_WIDTH(UP_ADDRESS_WIDTH)
+  ) i_up_axi (
+      .up_rstn(s_axi_aresetn),
+      .up_clk(s_axi_aclk),
+      .up_axi_awvalid(s_axi_awvalid),
+      .up_axi_awaddr(s_axi_awaddr),
+      .up_axi_awready(s_axi_awready),
+      .up_axi_wvalid(s_axi_wvalid),
+      .up_axi_wdata(s_axi_wdata),
+      .up_axi_wstrb(s_axi_wstrb),
+      .up_axi_wready(s_axi_wready),
+      .up_axi_bvalid(s_axi_bvalid),
+      .up_axi_bresp(s_axi_bresp),
+      .up_axi_bready(s_axi_bready),
+      .up_axi_arvalid(s_axi_arvalid),
+      .up_axi_araddr(s_axi_araddr),
+      .up_axi_arready(s_axi_arready),
+      .up_axi_rvalid(s_axi_rvalid),
+      .up_axi_rresp(s_axi_rresp),
+      .up_axi_rdata(s_axi_rdata),
+      .up_axi_rready(s_axi_rready),
+      .up_wreq(up_wreq_s),
+      .up_waddr(up_waddr_s),
+      .up_wdata(up_wdata_s),
+      .up_wack(up_wack_s),
+      .up_rreq(up_rreq_s),
+      .up_raddr(up_raddr_s),
+      .up_rdata(up_rdata_s),
+      .up_rack(up_rack_s)
+  );
 
   initial begin
     $dumpvars(0, adau1761_spi_configurator);
