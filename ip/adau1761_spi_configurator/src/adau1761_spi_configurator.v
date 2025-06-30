@@ -1,5 +1,5 @@
 module adau1761_spi_configurator #(
-    parameter UP_ADDRESS_WIDTH = 16
+  parameter UP_ADDRESS_WIDTH = 16
 ) (
     output wire sclk,
     output reg sdo,
@@ -192,6 +192,7 @@ module adau1761_spi_configurator #(
       8'h02:   up_rdata_s <= up_scratch;
       default: up_rdata_s <= 'h00;
     endcase
+  end
 
   always @(posedge s_axi_aclk) begin
     if (!s_axi_aresetn) begin
@@ -217,7 +218,7 @@ module adau1761_spi_configurator #(
   end
 
   up_axi #(
-      .AXI_ADDRESS_WIDTH(UP_ADDRESS_WIDTH)
+    .AXI_ADDRESS_WIDTH(UP_ADDRESS_WIDTH)
   ) i_up_axi (
       .up_rstn(s_axi_aresetn),
       .up_clk(s_axi_aclk),
